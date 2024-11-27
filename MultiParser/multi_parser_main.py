@@ -1,7 +1,6 @@
 from work_with_book import create_book
 
-from Ozon_v2.ozon_v2_main import Ozon_parser
-from Wildberries_search_parser.wildberies_search_main import WildberriesParser
+from Classes import Ozon_parser, WildberriesParser
 
 
 ozon_data = None
@@ -29,5 +28,5 @@ def multi_parser_main(key_words: str, page_count=1, max_price=20000):
 
 
 if __name__ == '__main__':
-    multi_parser_main(key_words='nintendo switch', max_price=200000)
+    multi_parser_main(key_words='nintendo switch', max_price=200000, page_count=2)
 # Создать интерфейс
