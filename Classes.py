@@ -15,7 +15,7 @@ from curl_cffi import requests as cffi_requests
 
 
 class Parser(ABC):
-    def __init__(self, key_words: str, page_count=1, max_price=20000):
+    def __init__(self, key_words: str, page_count: int, max_price: int):
         self.key_words = key_words
         self.max_price = max_price
         self.page_count = page_count
@@ -44,22 +44,20 @@ class Parser(ABC):
         pass
 
 
-class Ozon_parser:
+class Oz_parser(Parser):
     def __init__(self, key_words: str, page_count=1, max_price=20000):
+        super().__init__(key_words, page_count, max_price)
         self.url = "https://www.ozon.ru/"
-        self.key_words = key_words
-        self.max_price = max_price
-        self.page_count = page_count
-        self.data = []
+        self.driver = None
+        self.products_urls = None
 
     def set_up(self):
         """Инициализируем и настраиваем webdriver"""
-        self.options = webdriver.ChromeOptions()
-        # self.options.add_argument("--headless")
-        self.options.add_argument('--disable-blink-features=AutomationControlled')
-        self.driver = webdriver.Chrome(options=self.options)
+        options = webdriver.ChromeOptions()
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        self.driver = webdriver.Chrome(options=options)
 
-    def get_url(self):
+    def get_page(self):
         self.driver.get(self.url)
 
     def search(self):
@@ -71,7 +69,7 @@ class Ozon_parser:
         time.sleep(0.1)
         search_box.send_keys(Keys.ENTER)
 
-    def paginator(self):
+    def paginate(self):
         current_url = f'{self.driver.current_url}&sorting=rating'
         self.driver.get(url=current_url)
         if self.page_count > 1:
@@ -111,33 +109,24 @@ class Ozon_parser:
         with open('ozon_items.json', 'w', encoding='utf-8') as file:
             json.dump(self.data, file, ensure_ascii=False, indent=4)
 
-    def parse(self):
+    def start(self):
         self.set_up()
-        self.get_url()
+        self.get_page()
         self.search()
-        self.paginator()
+        self.paginate()
         self.get_products_urls()
         self.get_product_info()
         self.save_data()
 
 
-if __name__ == "__main__":
-    Ozon_parser(
-        key_words='Nintendo switch',
-        page_count=1,
-        max_price=200000
-    ).parse()
-
-
-class WildberriesParser:
+class WB_parser(Parser):
     def __init__(self, key_words: str, page_count=1, max_price=20000):
+        super().__init__(key_words, page_count, max_price)
         self.url = 'https://search.wb.ru/exactmatch/ru/common/v7/search'
-        self.key_words = key_words
-        self.page_count = page_count
-        self.max_price = max_price
-        self.data = []
+        self.params = None
+        self.response = None
 
-    def set_params(self):
+    def set_up(self):
         self.params = {
             'ab_testing': 'false',
             'appType': '1',
@@ -188,15 +177,9 @@ class WildberriesParser:
         with open('items.json', 'w', encoding='utf-8') as file:
             json.dump(self.data, file, ensure_ascii=False, indent=4)
 
-    def parse(self):
-        self.set_params()
+    def start(self):
+        self.set_up()
         self.get_page()
         self.paginate()
 
 
-if __name__ == '__main__':
-    WildberriesParser(
-        key_words='nintendo switch',
-        page_count=1,
-        max_price=22000
-    ).parse()
