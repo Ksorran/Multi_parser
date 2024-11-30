@@ -1,32 +1,41 @@
 from work_with_book import create_book
-
-from Classes import Oz_parser, WB_parser
-
-
-ozon_data = None
-wb_data = None
-
-
-class multi_ozon_parser(Oz_parser):
-    def save_data(self):
-        global ozon_data
-        ozon_data = self.data
-
-
-class multi_wb_parser(WB_parser):
-    def save_data(self):
-        global wb_data
-        wb_data = self.data
+from Classes import OzonParser, WildberriesParser
+import tkinter as tk
+from tkinter import messagebox
 
 
 def multi_parser_main(key_words: str, page_count=1, max_price=20000):
-    multi_ozon_parser(key_words, page_count=page_count, max_price=max_price).start()
-    multi_wb_parser(key_words, page_count=page_count, max_price=max_price).start()
-    global ozon_data
-    global wb_data
+    ozon_data = OzonParser(key_words=key_words, page_count=page_count, max_price=max_price).start()
+    wb_data = WildberriesParser(key_words=key_words, page_count=page_count, max_price=max_price).start()
     create_book(ozon_data, wb_data)
+
+def start_parser():
+    """Собирает информацию, поступившую от пользователя через графический интерфейс и запускает на ее основе парсер"""
+    key_words = key_words_entry.get()
+    page_count = int(pages_entry.get())
+    max_price = int(max_price_entry.get())
+    multi_parser_main(key_words=key_words, page_count=page_count, max_price=max_price)
+    messagebox.showinfo("Информация", "Парсинг завершен. Результаты сохранены в multi_parser.xlsx")
 
 
 if __name__ == '__main__':
-    multi_parser_main(key_words='nintendo switch', max_price=200000, page_count=2)
-# Создать интерфейс
+    root = tk.Tk()
+    root.title("Marketplaces Parser")
+
+    tk.Label(root, text="Введите элементы для поиска (через пробел):").grid(row=0, column=0, padx=10, pady=10)
+    key_words_entry = tk.Entry(root, width=50)
+    key_words_entry.grid(row=0, column=1, padx=10, pady=10)
+
+    tk.Label(root, text="Введите количество страниц:").grid(row=1, column=0, padx=10, pady=10)
+    pages_entry = tk.Entry(root, width=10)
+    pages_entry.grid(row=1, column=1, padx=10, pady=10)
+    pages_entry.insert(0, '1')
+
+    tk.Label(root, text="Введите максимально допустимую стоимость:").grid(row=2, column=0, padx=10, pady=10)
+    max_price_entry = tk.Entry(root, width=10)
+    max_price_entry.grid(row=2, column=1, padx=10, pady=10)
+    max_price_entry.insert(0, '20000')
+
+    tk.Button(root, text="Запуск парсера", command=start_parser).grid(row=3, column=0, columnspan=2, padx=10, pady=20)
+
+    root.mainloop()

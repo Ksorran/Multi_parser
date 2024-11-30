@@ -15,16 +15,15 @@ from curl_cffi import requests as cffi_requests
 
 
 class Parser(ABC):
-    def __init__(self, key_words: str, page_count: int, max_price: int):
+    def __init__(self, key_words: str, page_count: int, max_price: int, url: str):
         self.key_words = key_words
         self.max_price = max_price
         self.page_count = page_count
         self.data = []
-        # self url определяется внутри наследника
+        self.url = url
 
     @abstractmethod
     def set_up(self):
-        # set_params в случае с wildberries
         pass
 
     @abstractmethod
@@ -36,18 +35,13 @@ class Parser(ABC):
         pass
 
     @abstractmethod
-    def save_data(self):
-        pass
-
-    @abstractmethod
     def start(self):
         pass
 
 
-class Oz_parser(Parser):
-    def __init__(self, key_words: str, page_count=1, max_price=20000):
-        super().__init__(key_words, page_count, max_price)
-        self.url = "https://www.ozon.ru/"
+class OzonParser(Parser):
+    def __init__(self, key_words: str, page_count: int, max_price: int, url="https://www.ozon.ru/"):
+        super().__init__(key_words, page_count, max_price, url)
         self.driver = None
         self.products_urls = None
 
@@ -101,13 +95,8 @@ class Oz_parser(Parser):
                 }
                 if float(product_data['price']) < self.max_price:
                     self.data.append(product_data)
-            except Exception as e:
+            except Exception:
                 continue
-
-    def save_data(self):
-        """Сохраняем отобранную информацию"""
-        with open('ozon_items.json', 'w', encoding='utf-8') as file:
-            json.dump(self.data, file, ensure_ascii=False, indent=4)
 
     def start(self):
         self.set_up()
@@ -116,13 +105,13 @@ class Oz_parser(Parser):
         self.paginate()
         self.get_products_urls()
         self.get_product_info()
-        self.save_data()
+        return self.data
 
 
-class WB_parser(Parser):
-    def __init__(self, key_words: str, page_count=1, max_price=20000):
-        super().__init__(key_words, page_count, max_price)
-        self.url = 'https://search.wb.ru/exactmatch/ru/common/v7/search'
+class WildberriesParser(Parser):
+    def __init__(self, key_words: str, page_count: int, max_price: int,
+                 url="https://search.wb.ru/exactmatch/ru/common/v7/search"):
+        super().__init__(key_words, page_count, max_price, url)
         self.params = None
         self.response = None
 
@@ -149,7 +138,6 @@ class WB_parser(Parser):
             self.parse_page()
             self.page_count -= 1
             self.params['page'] = str(int(self.params['page'])+1)
-
             self.get_page()
 
     def parse_page(self):
@@ -170,16 +158,9 @@ class WB_parser(Parser):
             }
             if price <= self.max_price:
                 self.data.append(data)
-        self.save_data()
-
-    def save_data(self):
-        """Сохраняем отобранную информацию"""
-        with open('items.json', 'w', encoding='utf-8') as file:
-            json.dump(self.data, file, ensure_ascii=False, indent=4)
 
     def start(self):
         self.set_up()
         self.get_page()
         self.paginate()
-
-
+        return self.data
