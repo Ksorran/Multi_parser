@@ -67,24 +67,24 @@ class OzonParser(Parser):
         current_url = f'{self.driver.current_url}&sorting=rating'
         self.driver.get(url=current_url)
         if self.page_count > 1:
-            while True:
+            for _ in range(self.page_count*3):
                 ActionChains(self.driver).scroll_by_amount(1, 500).perform()
                 time.sleep(0.5)
-                if len(self.driver.find_elements(By.XPATH, "//div[@id='paginatorContent']/div")) == self.page_count:
-                    break
 
     def get_products_urls(self):
-        find_links = self.driver.find_elements(By.XPATH, "//a[contains(@class,'tile-hover-target')]")
+        find_links = self.driver.find_elements(By.XPATH, "//a[contains(@class,'tile-clickable-element')]")
         self.products_urls = list(set([f'{link.get_attribute("href")}' for link in find_links]))
 
     def get_product_info(self):
-        s = cffi_requests.Session()
-        s.get("https://www.ozon.ru")
         for link in self.products_urls:
             api_link = f'https://www.ozon.ru/api/composer-api.bx/page/json/v2?url={link.split('ozon.ru')[1]}'
-            product_info = s.get(api_link)
-            json_data = json.loads(product_info.content.decode())
+
+            self.driver.get(api_link)
             try:
+                pre_element_locator = (By.TAG_NAME, "pre")
+                pre_element = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(pre_element_locator))
+                json_data = json.loads(pre_element.text)
+
                 product_data = {
                     'title': json_data["seo"]["title"],
                     'price': json.loads(json_data["seo"]["script"][0]["innerHTML"])["offers"]["price"],
@@ -93,9 +93,11 @@ class OzonParser(Parser):
                     'rating': json.loads(json_data["seo"]["script"][0]["innerHTML"])["aggregateRating"]["ratingValue"],
                     'url': link
                 }
+
                 if float(product_data['price']) < self.max_price:
                     self.data.append(product_data)
-            except Exception:
+            except Exception as e:
+                print(f"Ошибка при обработке {link}: {str(e)}")
                 continue
 
     def start(self):
@@ -124,7 +126,7 @@ class WildberriesParser(Parser):
             'dest': '-1649215',
             'query': self.key_words,
             'resultset': 'catalog',
-            'sort': 'popular',
+            'sort': 'rate',
             'spp': '30',
             'suppressSpellcheck': 'false',
         }

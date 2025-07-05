@@ -4,10 +4,11 @@ import tkinter as tk
 from tkinter import messagebox
 
 
-def multi_parser_main(key_words: str, page_count=1, max_price=20000):
-    ozon_data = OzonParser(key_words=key_words, page_count=page_count, max_price=max_price).start()
+def multi_parser_main(key_words: str, page_count: int, max_price: int):
+    ozon_data = OzonParser(key_words=key_words, page_count=page_count*3, max_price=max_price).start()
     wb_data = WildberriesParser(key_words=key_words, page_count=page_count, max_price=max_price).start()
     create_book(ozon_data, wb_data)
+
 
 def start_parser():
     """Собирает информацию, поступившую от пользователя через графический интерфейс и запускает на ее основе парсер"""
@@ -15,7 +16,7 @@ def start_parser():
     page_count = int(pages_entry.get())
     max_price = int(max_price_entry.get())
     multi_parser_main(key_words=key_words, page_count=page_count, max_price=max_price)
-    messagebox.showinfo("Информация", "Парсинг завершен. Результаты сохранены в multi_parser.xlsx")
+    messagebox.showinfo("Информация", "Парсинг завершен. Результаты сохранены в multi_parser.xlsx.")
 
 
 if __name__ == '__main__':
